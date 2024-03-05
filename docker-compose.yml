@@ -9,7 +9,6 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-    network_mode: "host"
     restart: always
 
   nginx:
@@ -19,5 +18,4 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    network_mode: "host"  
     restart: always
