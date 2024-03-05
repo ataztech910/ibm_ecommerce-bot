@@ -2,7 +2,7 @@ import { WebAppDataContext } from "@/utils/web-app-provider";
 import { Badge } from "@nextui-org/react";
 import { useContext } from "react";
 
-export default function CartIcon({color, number}) {
+export default function CartIcon({color, number}: any) {
     const { state, actions } = useContext(WebAppDataContext);
 
     const goToCart = () => {

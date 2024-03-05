@@ -1,0 +1,14 @@
+# Use the official Nginx image
+FROM nginx:latest
+
+# Copy the default Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./ssl/tgbotdev.info.crt /etc/nginx/ssl/tgbotdev.info.crt
+COPY ./ssl/tgbotdev.info.key /etc/nginx/ssl/tgbotdev.info.key
+
+# Expose ports
+EXPOSE 80
+EXPOSE 443
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

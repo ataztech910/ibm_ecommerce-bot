@@ -1,7 +1,7 @@
 import { lightenDarkenColor } from "@/utils/colors";
 import { useEffect, useState } from "react";
 
-export default function Cart({themeParams}) {
+export default function Cart({themeParams}: any) {
     const [ items, setItems ] = useState([]);
     
     useEffect(() => {
