@@ -1,116 +1,115 @@
 'use client';
-import { lightenDarkenColor } from "@/utils/colors";
-import { sendTextMessage } from "@/utils/web-app-actions";
+import { sendInvoiceMessage, sendTextMessage } from "@/utils/web-app-actions";
 import { WebAppDataContext } from "@/utils/web-app-provider";
-import { Button, Card, CardBody, Listbox, ListboxItem, Switch } from "@nextui-org/react";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import Item from "./components/Item";
+import { motion } from "framer-motion";
+import ItemLayout from "./components/ItemLayout";
+import Cart from "./components/Cart";
+
+
+const catalogVariants = {
+  open: { height: '100%', opacity: 1 },
+  closed: { height: '0' , opacity: 0 },
+}
 
 export default function Home() {
-  const { state } = useContext(WebAppDataContext);
-  const [mainButtonActive, setMainButtonActive] = useState(false);
-  const [closeConfirmationActive, setCloseConfirmationActive] = useState(false);
-
-  const setExpand = () => {
-    state.appData.expand();
-  }
-
-  const setMainButtonStatus = () => {
-    const newState = !mainButtonActive;
-    state.appData.MainButton.isVisible = newState;
-    state.appData.MainButton[newState ? 'enable': 'disable']();
-    setMainButtonActive(newState);
-  };
+  const { state, actions } = useContext(WebAppDataContext);
+  const [ items, setItems ] = useState([]);
   
-  const setCloseConfirmation = () => {
-    const newState = !closeConfirmationActive;
-    state.appData.isClosingConfirmationEnabled = newState;
-    setCloseConfirmationActive(newState)
-  };
+  useEffect(() => {
+    state.appData.BackButton.isVisible = false;
+    state.appData.MainButton.isVisible = true;
+  }, [state.appData]);
 
-  const sendMessage = () => {
-    sendTextMessage(state.appData);
-  };
-
-  const requestLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function (position) {
-         state.appData?.showAlert(`${position.coords.latitude} , ${position.coords.longitude}`);
+  const initMainButton = () => {
+    state.appData.MainButton.text = `Order ${state.appAnimation.cartCount} items`;
+    state.appData.MainButton.onClick(() => {
+      actions.setAppAnimation({...state.appAnimation, ...{catalogIsOpen: false, selectedItem: null, cartIsOpen: true}});
+      state.appData.BackButton.isVisible = true;
+      state.appData.BackButton.onClick(() => {
+        actions.setAppAnimation({...state.appAnimation, ...{catalogIsOpen: true, cartIsOpen: false}});
+        state.appData.BackButton.isVisible = false;
+        initMainButton();
       });
-    } else {
-        state.appData?.showAlert(`Geolocation is not supported in this browser.`);
-    }
-    return false;
+    });
   };
+  useEffect(() => {
+    initMainButton();
+  }, [state.appAnimation.cartCount]);
+
+  useEffect(() => {
+    if(state.appAnimation.selectedItem !== null) {
+      state.appData.BackButton.isVisible = true;
+      state.appData.MainButton.text = `Item to cart`;
+      state.appData.MainButton.onClick(() => {
+        actions.setAppAnimation({...state.appAnimation, ...{cartCount: ++state.appAnimation.cartCount}});
+      });
+      state.appData.BackButton.onClick(() => {
+        state.appData.BackButton.isVisible = false;
+        actions.setAppAnimation({...state.appAnimation, ...{catalogIsOpen: true, selectedItem: null}});
+        state.appData.MainButton.text = `Order ${state.appAnimation.cartCount} items`;
+      });
+    }
+  }, [state.appAnimation]);
+
+  useEffect(() => {
+    if(state.appAnimation.cartIsOpen) {
+      state.appData.MainButton.text = `To Checkout`;
+      actions.setAppAnimation({...state.appAnimation, ...{ selectedItem: null }});
+      
+      state.appData.MainButton.onClick(() => {
+        console.log('clicked');
+        sendInvoiceMessage(state.appData);
+      });
+
+      state.appData.BackButton.onClick(() => {
+        state.appData.BackButton.isVisible = false;
+        actions.setAppAnimation({...state.appAnimation, ...{catalogIsOpen: true, selectedItem: null, cartIsOpen: false}});
+        state.appData.MainButton.text = `Order ${state.appAnimation.cartCount} items`;
+      });
+    }
+  }, [state.appAnimation.cartIsOpen]);
+
+  useEffect(() => {
+    fetch('https://fakestoreapi.com/products')
+      .then(res=>res.json())
+      .then(json=>setItems(json));
+  },[]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start gap-2 p-2">
-      <Card
-        style={
+    <main className="h-full p-4">
+        <motion.div className="gap-6 grid grid-cols-2 sm:grid-cols-4"
+          animate={state.appAnimation.catalogIsOpen ? "open" : "closed"}
+          variants={catalogVariants}
+        >
           {
-            backgroundColor: `${lightenDarkenColor(state.appData.themeParams.secondary_bg_color, 85)}`,
-            color: `${state.appData.themeParams.section_header_text_color}`
+            items.length > 0 &&
+            items.map((item: any) => (
+            <Item key={item.id} item={item} themeParams={state.appData.themeParams} />
+            ))
           }
-        }
-      >
-        <CardBody>
-          <p>Make beautiful websites regardless of your design experience.</p>
-          <div>
-            <Button className="tg-button mt-4" onClick={ setExpand }>
-              Expand layout
-            </Button>
-          </div>
-          <div><Switch className="mt-4" isSelected={mainButtonActive} onChange={setMainButtonStatus} size="sm">Enable Main Button</Switch></div>
-          <div><Switch className="mt-4" isSelected={closeConfirmationActive} onChange={setCloseConfirmation} size="sm">Enable Close Confirmation</Switch></div>
-          
-          <div>
-            <Button className="tg-button mt-4" onClick={ sendMessage }>
-              Send message to chat
-            </Button>
-          </div>
+        </motion.div>
 
-        </CardBody>
-      </Card>
+      {
+        state.appAnimation.selectedItem !== null && !state.appAnimation.cartIsOpen &&
+          <motion.div className="w-full"
+            animate={state.appAnimation.selectedItem !==null ? "open" : "closed"}
+            variants={catalogVariants}
+          >
+            <ItemLayout themeParams={state.appData.themeParams}/>
+          </motion.div>
+      }
 
-      <Card
-        style={
-          {
-            backgroundColor: `${lightenDarkenColor(state.appData.themeParams.secondary_bg_color, 85)}`,
-            color: `${state.appData.themeParams.section_header_text_color}`,
-            width: '100%'
-          }
-        }
-      >
-        <Listbox>
-          <ListboxItem key="regular_link">
-            <a id="regular_link" href="https://telegram.org/" target="_blank">Regular link #2</a>
-          </ListboxItem>
-          <ListboxItem key="likebot"><a href="https://t.me/like">LikeBot t.me link</a></ListboxItem>
-        </Listbox>
-      </Card>
-
-
-      {/* <ul>
-        <li><a href="javascript:;" onclick="return DemoApp.requestLocation(this);">Request Location</a> <span></span></li>
-        <li><a href="javascript:;" onclick="return DemoApp.requestVideo(this);">Request Video</a> <span></span></li>
-        <li><a href="javascript:;" onclick="return DemoApp.requestAudio(this);">Request Audio</a> <span></span></li>
-        <li><a href="javascript:;" onclick="return DemoApp.requestAudioVideo(this);">Request Audio+Video</a> <span></span></li>
-        <li><a href="javascript:;" onclick="return DemoApp.testClipboard(this);" id="clipboard_test">Read from clipboard</a> <span></span></li>
-    </ul> */}
-
-    <Card
-        style={
-          {
-            backgroundColor: `${lightenDarkenColor(state.appData.themeParams.secondary_bg_color, 85)}`,
-            color: `${state.appData.themeParams.section_header_text_color}`,
-            width: '100%'
-          }
-        }
-      >
-      <Listbox>
-        <ListboxItem key="request_location" onClick={requestLocation}>Request Location</ListboxItem>
-      </Listbox>
-      </Card>
-
+      {
+        state.appAnimation.cartIsOpen &&
+          <motion.div className="w-full"
+            animate={state.appAnimation.cartIsOpen ? "open" : "closed"}
+            variants={catalogVariants}
+          >
+            <Cart themeParams={state.appData.themeParams}/>
+          </motion.div>
+      }
     </main>
   );
 }

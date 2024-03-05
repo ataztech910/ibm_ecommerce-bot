@@ -8,24 +8,15 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-
     const { state } = useContext(WebAppDataContext);
-    const [loaded, setLoaded] = useState(false);
-  
-    useEffect(() => {
-      console.log('state.appData', state);
-      if (state.appData?.version?.length > 0) {
-          setLoaded(true);
-      }
-    }, [state]);
-  return (
-        <body>
-          <NextUIProvider>
-             { loaded && 
-                children
-             }
-          </NextUIProvider>
-        </body>
-    
-  )
+    return (
+          <body>
+            <NextUIProvider>
+              { state.appData?.version?.length > 0 && 
+                  children
+              }
+            </NextUIProvider>
+          </body>
+      
+    )
 }

@@ -22,4 +22,32 @@ function sendTextMessage(app: WebAppTypes) {
       
 };
 
-export { sendTextMessage };
+function sendInvoiceMessage(app: WebAppTypes) {
+  let id = app.initDataUnsafe.query_id;
+  if (app.initDataUnsafe.chat_instance) {
+    id = app.initDataUnsafe.chat_instance;
+  }
+  const botUrl = `/generateInvoice?query_id=${id}`;
+  console.log(botUrl);
+  const options = {
+      method: 'GET',
+  };
+    
+  fetch(botUrl, options)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(responseData => {
+      app.openInvoice(responseData.data.invoiceLink);
+      console.log('POST request successful:', responseData);
+    })
+    .catch(error => {
+      console.error('Error:', error.message);
+    });
+    
+};
+
+export { sendTextMessage, sendInvoiceMessage };
