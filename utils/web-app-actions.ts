@@ -1,7 +1,7 @@
 import { WebApp as WebAppTypes } from "@twa-dev/types";
 
 function sendTextMessage(app: WebAppTypes) {
-    const botUrl = `/sendToUserFromWebApp?query_id=${app.initDataUnsafe.query_id}`;
+    const botUrl = `https://tgbotdev.info/sendToUserFromWebApp?query_id=${app.initDataUnsafe.query_id}`;
     const options = {
         method: 'GET',
     };
@@ -27,7 +27,7 @@ function sendInvoiceMessage(app: WebAppTypes) {
   if (app.initDataUnsafe.chat_instance) {
     id = app.initDataUnsafe.chat_instance;
   }
-  const botUrl = `/generateInvoice?query_id=${id}`;
+  const botUrl = `https://tgbotdev.info/generateInvoice?query_id=${id}`;
   console.log(botUrl);
   const options = {
       method: 'GET',
