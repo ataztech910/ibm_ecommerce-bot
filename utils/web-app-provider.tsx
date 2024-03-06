@@ -32,6 +32,8 @@ const WebAppDataProvider = ({ children }: any) => {
         app.ready();
         app.setHeaderColor(app.themeParams.bg_color);
         app.setBackgroundColor('bg_color');
+        app.expand();
+        app.isExpanded = true;
         app.isClosingConfirmationEnabled = true;
         setAppData(app);
         console.log('window is defined app', app);
